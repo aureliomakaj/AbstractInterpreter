@@ -1,0 +1,47 @@
+﻿%{
+open ConcreteDomain
+%}
+
+%token <string> ID
+%token <System.Int32> INT
+
+%token 
+       ASSIGN SEMI BRA KET 
+       IF THEN ELSE WHILE DO
+       PLUS MINUS STAR SLASH
+       LT GT LEQ GEQ EQ NEQ
+       AND OR NOT
+%token EOF
+
+%nonassoc THEN ELSE
+%left SEMI
+%left OR
+%left AND 
+%left EQ LT GT LEQ GEQ NEQ
+%left PLUS MINUS 
+%left STAR SLASH 
+
+%type < ConcreteDomain.prog > Prog
+%start Prog
+
+%%
+
+start: Prog {  $1 }
+
+Prog: statementList { Prog(List.rev($1)) }
+
+expr: 
+    | INT           { Int($1) }
+    | ID            { Val($1) }
+
+statement: 
+    | ID ASSIGN expr                                { Assign($1, $3) }
+    | WHILE expr DO statement                       { While($2, $4) }
+    | IF expr THEN statement                        { IfThen($2, $4) }
+    | IF expr THEN statement ELSE statement         { IfThenElse($2, $4, $6) }
+
+
+statementList: 
+       |  statement { [$1] }
+       | statementList SEMI statement { $3 :: $1  }
+

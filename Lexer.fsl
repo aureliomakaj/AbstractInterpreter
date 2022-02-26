@@ -1,0 +1,38 @@
+﻿let digit = ['0'-'9']
+let whitespace = [' ' '\t' ]
+let newline = ('\n' | '\r' '\n')
+
+
+rule token = parse
+	| whitespace	{ token lexbuf }
+	| newline		{ newline lexbuf; token lexbuf }
+	| eof			{ EOF }
+
+	| ":="          { ASSIGN }
+	| ";"           { SEMI }
+	| "("           { BRA }
+	| ")"           { KET }
+
+
+	| "if"          { IF }
+	| "then"        { THEN }
+	| "else"        { ELSE }
+	| "while"       { WHILE }
+	| "do"          { DO }
+
+	| '+'			{ PLUS }
+	| '-'			{ MINUS }
+	| '*'			{ STAR }
+	| '/'			{ SLASH }
+
+	| '='			{ EQ }
+	| "!="			{ NEQ }
+	| '<'			{ LT }
+	| '>'			{ GT }
+	| "<="			{ LEQ }
+	| ">="			{ GEQ }
+
+	| "or"			{ OR }
+	| "and"			{ AND }
+	| "not"			{ NOT }
+
