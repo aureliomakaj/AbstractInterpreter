@@ -9,7 +9,7 @@ rule token = parse
 	| eof			{ EOF }
 
 	| ":="          { ASSIGN }
-	| ";"           { SEMI }
+	| ";"           { SEMICOLON }
 	| "("           { BRA }
 	| ")"           { KET }
 

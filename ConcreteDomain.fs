@@ -9,8 +9,8 @@ type expr =
 //Statement
 type stm = 
     | Assign of string * expr
-    | IfThenElse of expr * statement * statement option
-    | While of expr * statement
+    | IfThenElse of expr * stm * stm option
+    | While of expr * stm
 
 //Program
-type prog = Prog of statement list
+type prog = Prog of stm list
