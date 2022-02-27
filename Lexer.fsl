@@ -1,12 +1,27 @@
-﻿let digit = ['0'-'9']
+﻿{
+open System
+open FSharp.Text.Lexing
+open Parser
+open ConcreteDomain
+
+let newline (lexbuf: LexBuffer<_>) =  lexbuf.EndPos <- lexbuf.EndPos.NextLine
+let lexeme = LexBuffer<_>.LexemeString
+
+}
+
+let digit = ['0'-'9']
 let whitespace = [' ' '\t' ]
 let newline = ('\n' | '\r' '\n')
+
+let idbody = ['a'-'z' 'A'-'Z' '0'-'9' '_']*['\'']*	
+let Uid = ['A'-'Z'] idbody
+let Lid = ['a'-'z' '_'] idbody
+let id = Uid | Lid
 
 
 rule token = parse
 	| whitespace	{ token lexbuf }
 	| newline		{ newline lexbuf; token lexbuf }
-	| eof			{ EOF }
 
 	| ":="          { ASSIGN }
 	| ";"           { SEMICOLON }
@@ -36,3 +51,8 @@ rule token = parse
 	| "and"			{ AND }
 	| "not"			{ NOT }
 
+	| digit   	    { INT (Int32.Parse (lexeme lexbuf)) }
+
+	| id 		    { ID (lexeme lexbuf) }
+
+	| eof			{ EOF }

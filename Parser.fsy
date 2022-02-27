@@ -32,27 +32,24 @@ start:
 Prog: 
     StmList { Prog(List.rev($1)) }
 
-expr: 
-    | expr_core
-    | BRA expr_core KET
 
-expr_core:
-    | INT                   { Int($1) }
-    | ID                    { Val($1) }
+expr:
+      INT                   { Int($1) }
+    | ID                    { Var($1) }
     | expr PLUS expr        { BinOp($1, "+", $3) }
     | expr MINUS expr       { BinOp($1, "-", $3) }
     | expr STAR expr        { BinOp($1, "*", $3) }
     | expr SLASH expr       { BinOp($1, "/", $3) }
 
 
-statement: 
-    | ID ASSIGN expr                                { Assign($1, $3) }
-    | IF expr THEN statement                        { IfThen($2, $4) }
-    | IF expr THEN statement ELSE statement         { IfThenElse($2, $4, $6) }
-    | WHILE expr DO statement                       { While($2, $4) }
+stm: 
+     ID ASSIGN expr                                 { Assign($1, $3) }
+    | IF expr THEN stm                              { IfThenElse($2, $4, None) }
+    | IF expr THEN stm ELSE stm                     { IfThenElse($2, $4, Some $6) }
+    | WHILE expr DO stm                             { While($2, $4) }
 
 
-statementList: 
-       |  statement { [$1] }
-       | statementList SEMICOLON statement { $3 :: $1  }
+StmList: 
+        stm { [$1] }
+       | StmList SEMICOLON stm { $3 :: $1  }
 

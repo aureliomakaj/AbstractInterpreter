@@ -7,14 +7,28 @@
 	<AssemblyName>AbstractInterpreter</AssemblyName>
 	</PropertyGroup>
 
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+	  <DefineConstants>DEBUG;TRACE</DefineConstants>
+	  <OutputPath></OutputPath>
+	  <WarningLevel>5</WarningLevel>
+	  <OtherFlags />
+	</PropertyGroup>
+
 	<ItemGroup>
+		<Compile Include="Parsing.fs" />
 		<Compile Include="ConcreteDomain.fs" />
-		<Compile Include="Program.fs" />
 		<Compile Include="Parser.fs" />
 		<Compile Include="Lexer.fs" />
+		<Compile Include="Printer.fs" />
+		<Compile Include="Main.fs" />
 	</ItemGroup>
 
 	<ItemGroup>
+	  <Content Include="input_program.txt" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Fantomas" Version="4.6.5" />
 		<PackageReference Include="FsLexYacc" Version="10.2.0" />
 		<PackageReference Include="FsLexYacc.Runtime" Version="10.2.0" />
 		
@@ -27,7 +41,8 @@
 
 	</ItemGroup>
 
+	<ItemGroup>
+	  <PackageReference Update="FSharp.Core" Version="6.0.1" />
+	</ItemGroup>
 
-	
-	
 </Project> 

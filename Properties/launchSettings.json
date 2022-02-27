@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "Debug": {
+      "commandName": "Project",
+      "commandLineArgs": "C:\\Users\\makaj\\source\\repos\\soft-ver-abstract-interpreter\\input_program.txt"
+    }
+  }
+}
