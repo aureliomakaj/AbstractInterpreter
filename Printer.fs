@@ -20,6 +20,6 @@ let rec pretty_stm (stm: stm) =
         sprintf "if %s\n  THEN\n    %s\n  ELSE\n    %s" (pretty_expr expr) (pretty_stm stm1) (pretty_stm stm2)
 
     | While (expr, stm1) -> sprintf "while %s  DO \n %s" (pretty_expr expr) (pretty_stm stm1)
-
+     
 
 let print_program prog = List.iter (fun s -> printf "%s;\n" (pretty_stm s)) prog
