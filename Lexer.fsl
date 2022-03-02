@@ -13,10 +13,7 @@ let digit = ['0'-'9']
 let whitespace = [' ' '\t' ]
 let newline = ('\n' | '\r' '\n')
 
-let idbody = ['a'-'z' 'A'-'Z' '0'-'9' '_']*['\'']*	
-let Uid = ['A'-'Z'] idbody
-let Lid = ['a'-'z' '_'] idbody
-let id = Uid | Lid
+let id = ['a'-'z' 'A'-'Z']
 
 
 rule token = parse
@@ -40,10 +37,10 @@ rule token = parse
 	| '*'			{ STAR }
 	| '/'			{ SLASH }
 
-	| '='			{ EQ }
+	| "=="			{ EQ }
 	| "!="			{ NEQ }
-	| '<'			{ LT }
-	| '>'			{ GT }
+	| "<"			{ LT }
+	| ">"			{ GT }
 	| "<="			{ LEQ }
 	| ">="			{ GEQ }
 
