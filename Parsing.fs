@@ -4,7 +4,7 @@
 * (C) 2007-2021 Alvise Spano' @ Universita' Ca' Foscari di Venezia
 *)
 
-module FSharp.Common.Parsing
+module Parsing
 
 #nowarn "52"
 
