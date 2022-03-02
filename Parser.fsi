@@ -56,7 +56,6 @@ type tokenId =
     | TOKEN_error
 type nonTerminalId = 
     | NONTERM__startProg
-    | NONTERM_start
     | NONTERM_Prog
     | NONTERM_expr
     | NONTERM_stm
