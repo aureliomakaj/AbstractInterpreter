@@ -13,7 +13,7 @@ let parse_prog (filename:string) =
     use rd = new IO.StreamReader (fstr)
     //Buffer from stream 
     let lexbuf = LexBuffer<char>.FromTextReader rd
-    let program = Parser.Prog Lexer.token lexbuf
+    let program = Parser.Prog Lexer.token lexbuf 
     match program with
     | Prog (l) -> print_program l
 

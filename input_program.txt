@@ -1,7 +1,8 @@
 ﻿x := (5 + 7 / 5 * 4); 
 if x > 3 
 then 
-	if z != 4 then k := 8;
+	while z != 4 do k := 8;
 else 
 	y := 0;
 
+z := 4;
