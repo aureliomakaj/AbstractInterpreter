@@ -4,8 +4,10 @@ type token =
   | EOF
   | ASSIGN
   | SEMICOLON
-  | BRA
-  | KET
+  | LPAR
+  | RPAR
+  | LCUR
+  | RCUR
   | IF
   | THEN
   | ELSE
@@ -30,8 +32,10 @@ type tokenId =
     | TOKEN_EOF
     | TOKEN_ASSIGN
     | TOKEN_SEMICOLON
-    | TOKEN_BRA
-    | TOKEN_KET
+    | TOKEN_LPAR
+    | TOKEN_RPAR
+    | TOKEN_LCUR
+    | TOKEN_RCUR
     | TOKEN_IF
     | TOKEN_THEN
     | TOKEN_ELSE

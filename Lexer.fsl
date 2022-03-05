@@ -9,11 +9,11 @@ let lexeme = LexBuffer<_>.LexemeString
 
 }
 
-let digit = ['0'-'9']
-let whitespace = [' ' '\t' ]
+let digit = ['0'-'9']+
+let whitespace = [' ' '\t' ]+
 let newline = ('\n' | '\r' '\n')
 
-let id = ['a'-'z' 'A'-'Z']
+let id = ['a'-'z' 'A'-'Z']+
 
 
 rule token = parse
@@ -22,8 +22,10 @@ rule token = parse
 
 	| ":="          { ASSIGN }
 	| ";"           { SEMICOLON }
-	| "("           { BRA }
-	| ")"           { KET }
+	| "("           { LPAR }
+	| ")"           { RPAR }
+	| "{"			{ LCUR }
+	| "}"			{ RCUR }
 
 
 	| "if"          { IF }

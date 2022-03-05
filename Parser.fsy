@@ -6,7 +6,7 @@ open ConcreteDomain
 %token <System.Int32> INT
 
 %token 
-       ASSIGN SEMICOLON BRA KET 
+       ASSIGN SEMICOLON LPAR RPAR LCUR RCUR
        IF THEN ELSE WHILE DO
        PLUS MINUS STAR SLASH
        LT GT LEQ GEQ EQ NEQ
@@ -28,7 +28,7 @@ open ConcreteDomain
 %%
 
 Prog:
-    StmList EOF             { Prog(List.rev($1)) }
+    StmList EOF             { Prog(($1)) }
 
 
 expr:
@@ -41,21 +41,28 @@ expr:
 
     | expr EQ expr              { BinOp($1, "==", $3) }
     | expr NEQ expr             { BinOp($1, "!=", $3) }
+
     | expr LT expr              { BinOp($1, "<",  $3) }
     | expr GT expr              { BinOp($1, ">",  $3) }
     | expr LEQ expr             { BinOp($1, "<=", $3) }
     | expr GEQ expr             { BinOp($1, ">=", $3) }
 
-    | BRA expr KET              { $2 }
+    | LPAR expr RPAR              { $2 }
 
 
 stm: 
-      ID ASSIGN expr SEMICOLON                      { Assign($1, $3) }
-    | IF expr THEN stm                              { IfThenElse($2, $4, None) }
-    | IF expr THEN stm ELSE stm                     { IfThenElse($2, $4, Some $6) }
-    | WHILE expr DO stm                             { While($2, $4) }
+      ID ASSIGN expr SEMICOLON                                  { Assign($1, $3) }
+
+    | IF expr THEN stm                                          { IfThenElse($2, [$4], []) }
+    | IF expr THEN LCUR StmList RCUR                            { IfThenElse($2, $5, []) }
+
+    | IF expr THEN stm ELSE stm                                 { IfThenElse($2, [$4], [$6]) }
+    | IF expr THEN LCUR StmList RCUR ELSE LCUR StmList RCUR     { IfThenElse($2, $5, $9) }
+
+    | WHILE expr DO stm                                         { While($2, [$4]) }
+    | WHILE expr DO LCUR StmList RCUR                           { While($2, $5) }
     
 
 StmList: 
       stm           { [$1] }
-    | StmList stm   { $2 :: $1  }
+    | StmList stm   { $1 @ [$2] }

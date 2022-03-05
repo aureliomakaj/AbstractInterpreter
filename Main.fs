@@ -1,22 +1,30 @@
 ﻿module Main
 
+open Utilities
 open System
 open FSharp.Text.Lexing
-open Parser
-open Lexer
 open ConcreteDomain
+open ConcreteDomainEval
 open Printer
 
-let parse_prog (filename:string) = 
-    printfn "loading source file '%s'..." filename
-    use fstr = new IO.FileStream (filename, IO.FileMode.Open)
-    use rd = new IO.StreamReader (fstr)
-    //Buffer from stream 
-    let lexbuf = LexBuffer<char>.FromTextReader rd
-    let program = Parser.Prog Lexer.token lexbuf 
-    match program with
-    | Prog (l) -> print_program l
+let trap f =
+    try f ()
+    with 
+       | UnexpectedError msg       -> printfn "\nunexpected error: %s" msg
 
+let parse_prog (filename:string) = 
+    trap <| fun () ->
+        printfn "loading source file '%s'..." filename
+        use fstr = new IO.FileStream (filename, IO.FileMode.Open)
+        use rd = new IO.StreamReader (fstr)
+        //Buffer from stream 
+        let lexbuf = LexBuffer<char>.FromTextReader rd
+        let program = Parser.Prog Lexer.token lexbuf 
+        match program with
+        | Prog (prog) ->
+            printf "+++++++ Program +++++++++ \n %s \n ++++++++++++++++++++" (pretty_program prog)
+            let env = eval_program [] prog
+            printf "+++++++ Environment +++++++++ \n %s \n ++++++++++++++++++++" (pretty_env (List.rev env))
 
 [<EntryPoint>]
 let main argv =
