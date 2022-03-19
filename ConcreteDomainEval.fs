@@ -1,10 +1,91 @@
 ﻿module ConcreteDomainEval
 
-open Utilities
-open Printer
 open ConcreteDomain
+open Utilities
 
-let rec eval_expr env expr = 
+let rec eval_expr (expr: expr) (state: mem_state) : value = 
+    match expr with
+    | Const c -> VSet (Set.singleton (c))
+    | Var v -> 
+        //Get all the values of the variable
+        let values = List.filter (fun (var, _) -> v = var ) state
+        VSet (Set.ofList (List.map (fun (_, n) -> n) values))
+    
+    | Range (NInt c1, NInt c2) ->
+        if c1 > c2 then raise_error "Lower bound cannot be greater then higher bound"
+        VSet (Set.ofList (List.map (fun x -> NInt x) [c1 .. c2]))
+
+    | Neg ("-", e) ->
+        let (VSet e) = eval_expr e state
+        VSet (Set.map (fun (NInt x) -> NInt (-x)) e)
+        
+    | BinOp (e1, "+", e2) -> 
+        let (VSet eval_e1) = eval_expr e1 state
+        let (VSet eval_e2)= eval_expr e2 state
+        VSet (interval_op (+) eval_e1 eval_e2)
+
+    | BinOp (e1, "-", e2) -> 
+        let (VSet eval_e1) = eval_expr e1 state
+        let (VSet eval_e2)= eval_expr e2 state
+        VSet (interval_op (-) eval_e1 eval_e2)
+
+    | BinOp (e1, "*", e2) -> 
+        let (VSet eval_e1) = eval_expr e1 state
+        let (VSet eval_e2)= eval_expr e2 state
+        VSet (interval_op (*) eval_e1 eval_e2)
+
+    | BinOp (e1, "/", e2) -> 
+        let (VSet eval_e1) = eval_expr e1 state
+        let (VSet eval_e2)= eval_expr e2 state
+        VSet (interval_op (/) eval_e1 (Set.filter (fun (NInt x) -> x <> 0 ) eval_e2))
+
+
+    | _ -> VSet Set.empty
+
+and interval_op op s1 s2 = 
+    if s1.IsEmpty || s2.IsEmpty then 
+        Set.empty
+    else
+        let operation n set = Set.map (fun (NInt n1) -> NInt ( (op) n n1)) set
+        (Set.fold (fun acc (NInt n1) -> Set.union acc (operation n1 s2)) Set.empty s1)
+
+
+let rec eval_cond cond states : mem_state = 
+    match cond with 
+    
+    | Bool b -> 
+        if b then 
+            states
+        else []
+
+    | BoolOp (cond1, "and", cond2) ->
+        let s1 = eval_cond cond1 states
+        if  s1.IsEmpty
+            then []
+        else
+            eval_cond cond2 s1
+
+    | BoolOp (cond1, "or", cond2) ->
+        let s1 = eval_cond cond1 states
+        let s2 = eval_cond cond2 states
+        s1 @ s2
+
+
+    //| Comparison of expr * string * expr
+
+let rec eval_prog prog states = 
+    match prog with
+    | Assign (var, expr) ->
+        let (VSet eval) = eval_expr expr states
+        let l = List.map (fun n -> (var, n)) (List.ofSeq eval)
+        l @ states
+
+    | Seq (p1, p2) ->
+        let s1 = eval_prog p1 states
+        eval_prog p2 s1
+
+    | _ -> []
+(*let rec eval_expr env expr = 
     match expr with
     | Int n -> VInt n
     | Var v -> 
@@ -20,8 +101,14 @@ let rec eval_expr env expr =
     | BinOp (e1, "/", e2) -> 
         let v1 = eval_expr env e1
         let v2 = eval_expr env e2
-        if v2 = VInt 0 then raise (Failure "Detected division by 0")
+        if v2 = VInt 0 then raise_error "Detected division by 0"
         binary_operation (/) v1 v2
+
+    | BinOp (e1, "%", e2) -> 
+        let v1 = eval_expr env e1
+        let v2 = eval_expr env e2
+        if v2 = VInt 0 then raise_error "Detected division by 0"
+        binary_operation (%) v1 v2
 
     | BinOp (e1, "==", e2) -> (==) (eval_expr env e1) (eval_expr env e2)
     | BinOp (e1, "!=", e2) -> (!=) (eval_expr env e1) (eval_expr env e2)
@@ -31,7 +118,13 @@ let rec eval_expr env expr =
     | BinOp (e1, ">=", e2) -> comparison (>=) (eval_expr env e1) (eval_expr env e2)
     | BinOp (e1, "<=", e2) -> comparison (<=) (eval_expr env e1) (eval_expr env e2)
 
-    | _ -> raise (Failure "Expression not implemented")
+    | UnOp ("-", expr) ->
+        let value = eval_expr env expr
+        match value with 
+        | VInt n -> VInt -n
+        | _ -> raise_error "Unary operator - implemented only of integers"
+
+    | _ -> raise_error "Expression not implemented"
 
 and binary_operation op e1 e2 = 
     match e1, e2 with 
@@ -100,4 +193,4 @@ and eval_program env prog =
     | x :: xs -> 
         let new_env = eval_stm env x
         eval_program new_env xs
-        
+*) 
