@@ -16,6 +16,7 @@ type expr =
 type cond = 
     | Bool of bool
     | BoolOp of cond * string * cond
+    | NotOp of cond
     | Comparison of expr * string * expr
 
 //commands
@@ -26,7 +27,6 @@ type com =
 //Possible values an expression could evaluate to
 type value = 
     | VSet of Set<number> //Set of numbers
-    //| VBool of bool
 
 //Statement
 type prog = 
@@ -34,7 +34,7 @@ type prog =
     | Seq of prog * prog // Sequence of statements
     | IfThenElse of cond * prog * prog option // If - then - else
     | While of cond * prog // while loop
-
+    
 //Program
 //type prog = Prog of stm list
 
