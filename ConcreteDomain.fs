@@ -3,7 +3,9 @@
 //
 type number = NInt of int
 
-let negate n = -n
+//Possible values an expression could evaluate to
+type value = 
+    | VSet of Set<number> //Set of numbers
 
 //Expressions
 type expr = 
@@ -19,14 +21,6 @@ type cond =
     | NotOp of cond
     | Comparison of expr * string * expr
 
-//commands
-type com = 
-    | Assign of string * expr //Assignment
-    | Cond of cond
-
-//Possible values an expression could evaluate to
-type value = 
-    | VSet of Set<number> //Set of numbers
 
 //Statement
 type prog = 
@@ -35,10 +29,7 @@ type prog =
     | IfThenElse of cond * prog * prog option // If - then - else
     | While of cond * prog // while loop
     
-//Program
-//type prog = Prog of stm list
 
 type mem_state = (string * number) list
 
 type env = mem_state list
-//type coll_state = mem_state list

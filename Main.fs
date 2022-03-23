@@ -21,7 +21,7 @@ let parse_prog (filename:string) =
         let lexbuf = LexBuffer<char>.FromTextReader rd
         let program = Parser.prog Lexer.token lexbuf
         let res = eval_prog program []
-        List.iter (fun (var, NInt value) -> printf "%s -> %d; \n" var value) res
+        List.iter (fun (var, NInt value) -> printf "%s -> %d; \n" var value) (List.rev res)
 
 
 [<EntryPoint>]

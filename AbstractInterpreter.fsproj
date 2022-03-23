@@ -15,11 +15,11 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<Compile Include="AbstractDomains\IntervalDomain.fs" />
 		<Compile Include="Utilities.fs" />
 		<Compile Include="ConcreteDomain.fs" />
-		<Compile Include="Printer.fs" />
 		<Compile Include="ConcreteDomainEval.fs" />
+		<Compile Include="AbstractDomains\IntervalDomain.fs" />
+		<Compile Include="Printer.fs" />
 		<Compile Include="Parser.fs" />
 		<Compile Include="Lexer.fs" />
 		<Compile Include="Main.fs" />

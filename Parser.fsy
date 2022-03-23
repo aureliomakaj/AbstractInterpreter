@@ -51,7 +51,7 @@ cond:
     | NOT cond                  { NotOp($2) }
 
     | expr EQ expr              { Comparison($1, "=", $3) }
-    | expr NEQ expr             { Comparison($1, "<>", $3) }
+    | expr NEQ expr             { Comparison($1, "!=", $3) }
 
     | expr LT expr              { Comparison($1, "<",  $3) }
     | expr GT expr              { Comparison($1, ">",  $3) }
