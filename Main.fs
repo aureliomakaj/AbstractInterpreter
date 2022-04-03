@@ -6,6 +6,7 @@ open FSharp.Text.Lexing
 open ConcreteDomain
 open ConcreteDomainEval
 open Printer
+open AbstractDomains.IntervalDomain
 
 let trap f =
     try f ()
@@ -20,8 +21,8 @@ let parse_prog (filename:string) =
         //Buffer from stream 
         let lexbuf = LexBuffer<char>.FromTextReader rd
         let program = Parser.prog Lexer.token lexbuf
-        let res = eval_prog program []
-        List.iter (fun (var, NInt value) -> printf "%s -> %d; \n" var value) (List.rev res)
+        let res = eval_abstr_prog program []
+        List.iter (fun (var, value) -> printf "%s -> %s; \n" var (pretty_abstract_value value)) (List.rev res)
 
 
 [<EntryPoint>]
