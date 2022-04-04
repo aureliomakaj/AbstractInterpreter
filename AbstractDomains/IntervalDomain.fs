@@ -241,8 +241,12 @@ let rec eval_abstr_expr expr state =
     //Variables
     | Var v -> 
         //Get all the values of the variable
-        let (_, value) = List.find (fun (var, _) -> v = var ) state
-        value
+        let elem = List.tryFind (fun (var, _) -> v = var ) state
+        match elem with
+        | None -> Interval(MinusInf, PlusInf)
+        | Some (_, value) -> value
+        //let (_, value) = List.find (fun (var, _) -> v = var ) state
+        //value
 
     | Range (NInt n1, NInt n2) ->
         Interval(IntrvInt n1, IntrvInt n2)
@@ -315,8 +319,8 @@ let rec eval_abstr_cond cond state =
                 if (number_leq c b) then
                     update_var variable (Interval (number_max a c, b)) state
                 else
-                    []
-            | _ -> []
+                    state
+            | _ -> state
 
         | Var var_x, Var var_y ->
             let v1 = eval_abstr_expr e1 state
@@ -327,8 +331,8 @@ let rec eval_abstr_cond cond state =
                     let state_upd_x = update_var var_x (Interval (number_max a c, b)) state
                     update_var var_y (Interval (c, number_min b d)) state_upd_x
                 else
-                    []
-            | _ -> []
+                    state
+            | _ -> state
         | _ -> state
 
     | Comparison (e1, "<=", e2) ->
@@ -341,8 +345,8 @@ let rec eval_abstr_cond cond state =
                 if (number_leq a c) then
                     update_var variable (Interval (a, number_min b c)) state
                 else
-                    []
-            | _ -> []
+                    state
+            | _ -> state
 
         | Var var_x, Var var_y ->
             let v1 = eval_abstr_expr e1 state
@@ -353,8 +357,8 @@ let rec eval_abstr_cond cond state =
                     let state_upd_x = update_var var_x (Interval (a, number_min b d)) state
                     update_var var_y (Interval (number_max a c, d)) state_upd_x
                 else
-                    []
-            | _ -> []
+                    state
+            | _ -> state
         | _ -> state
                 
     | _ -> state
@@ -372,7 +376,7 @@ let narrowing x y =
     match x, y with
     | Interval(a, b), Interval(c, d) -> 
         let lower = if a = MinusInf then c else a
-        let higher = if d = PlusInf then b else d
+        let higher = if b = PlusInf then d else b
         Interval (lower, higher)
     | Bottom, _ -> y
     | _, Bottom -> x
@@ -442,4 +446,10 @@ let rec eval_abstr_prog prog state =
             invariant <- check_abstrac_invariant s tmp
             s <- tmp
 
-        eval_abstr_cond (NotOp c) s
+        let res = eval_abstr_cond (NotOp c) s
+        res
+        //match c with
+        //| Comparison (Var x, op, e2) ->
+        //    let value = eval_abstr_expr (Var x) res
+        //    let v = eval_abstr_expr e2 res
+        //    update_var x (narrowing value v) res
