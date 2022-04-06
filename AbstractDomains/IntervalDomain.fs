@@ -14,6 +14,7 @@ type intrv_value =
     | Interval of intrv_number * intrv_number
     | Bottom
 
+//Check if two intrv_number are equal
 let number_eq num1 num2 = 
     match num1, num2 with
 
@@ -24,6 +25,7 @@ let number_eq num1 num2 =
 
     | _ -> false
 
+//Check if num1 is lower than num2
 let number_lower num1 num2 = 
     match num1, num2 with
 
@@ -38,15 +40,17 @@ let number_lower num1 num2 =
     | PlusInf, _
     | _, MinusInf -> false
 
-
+//Check if num1 is lower or equal than num2
 let number_leq num1 num2 = (number_lower num1 num2) || (number_eq num1 num2)
 
+//Get the max between num1 and num2
 let number_max num1 num2 = 
     if number_lower num1 num2 then
         num2
     else
         num1
 
+//Get the min between num1 and num2
 let number_min num1 num2 =
     if number_leq num1 num2 then 
         num1
@@ -57,14 +61,14 @@ let number_sum num1 num2 =
     match num1, num2 with
     | IntrvInt n1, IntrvInt n2 -> IntrvInt (n1 + n2)    // n1 + n2 = n3
     
-    | IntrvInt n, PlusInf               // n + (+Inf) = +Inf
-    | PlusInf, IntrvInt n -> PlusInf    // (+Inf) + n = +Inf
+    | IntrvInt n, PlusInf                               // n + (+Inf) = +Inf
+    | PlusInf, IntrvInt n -> PlusInf                    // (+Inf) + n = +Inf
 
-    | IntrvInt n, MinusInf              // n + (-Inf) = -Inf
-    | MinusInf, IntrvInt n -> MinusInf  // (-Inf) + n = -Inf
+    | IntrvInt n, MinusInf                              // n + (-Inf) = -Inf
+    | MinusInf, IntrvInt n -> MinusInf                  // (-Inf) + n = -Inf
 
-    | PlusInf, PlusInf -> PlusInf       // (+Inf) + (+Inf) = +Inf
-    | MinusInf, MinusInf -> MinusInf    // (-Inf) + (-Inf) = -Inf
+    | PlusInf, PlusInf -> PlusInf                       // (+Inf) + (+Inf) = +Inf
+    | MinusInf, MinusInf -> MinusInf                    // (-Inf) + (-Inf) = -Inf
 
     | _ -> raise_error "Abstraction error: sum operands not supported"
 
@@ -91,7 +95,7 @@ let number_prod num1 num2 =
     | IntrvInt n, PlusInf 
     | PlusInf, IntrvInt n ->
         if n = 0 then 
-            IntrvInt n      // 0 x (+Inf) = 0
+            IntrvInt 0      // 0 x (+Inf) = 0
         elif n < 0 then     
             MinusInf        // (-n) x (+Inf) = -Inf
         else
@@ -100,7 +104,7 @@ let number_prod num1 num2 =
     | IntrvInt n, MinusInf 
     | MinusInf, IntrvInt n ->
         if n = 0 then 
-            IntrvInt n      // 0 x (-Inf) = 0
+            IntrvInt 0      // 0 x (-Inf) = 0
         elif n < 0 then     
             PlusInf         // (-n) x (-Inf) = +Inf
         else
@@ -153,7 +157,7 @@ let value_eq val1 val2 =
 
 let value_leq val1 val2 = 
     match val1, val2 with
-    | Interval (l1, h1), Interval(l2, h2) -> (not (number_lower l1 l2)) && (number_leq h1 h2) // l1 >= l2 && h1 <= h2
+    | Interval (a, b), Interval(c, d) -> (not (number_lower a c)) && (number_leq b d) // l1 >= l2 && h1 <= h2
     | Bottom, _ -> true
     | _, Bottom -> false
 
@@ -161,27 +165,27 @@ let value_neg intrv =
     match intrv with
     | Interval (n1, n2) ->
         match n1, n2 with
-        | IntrvInt nat1, IntrvInt nat2 -> Interval (IntrvInt -nat2, IntrvInt -nat1)         // [a, b] = [-b, -a]
-        | MinusInf, IntrvInt nat1 -> Interval (IntrvInt -nat1, PlusInf)                     // [-Inf, n] = [-n, +Inf]
-        | IntrvInt nat1, PlusInf -> Interval (MinusInf, IntrvInt -nat1)                     // [n, +Inf] = [-Inf, -n]                               
-        | _ -> Interval (MinusInf, PlusInf)                                                 // [+-Inf, +-Inf] = [-Inf, +Inf] Always sound
+        | IntrvInt a, IntrvInt b -> Interval (IntrvInt -b, IntrvInt -a)                 // [a, b] = [-b, -a]
+        | MinusInf, IntrvInt a -> Interval (IntrvInt -a, PlusInf)                       // [-Inf, n] = [-n, +Inf]
+        | IntrvInt a, PlusInf -> Interval (MinusInf, IntrvInt -a)                       // [n, +Inf] = [-Inf, -n]                               
+        | _ -> Interval (MinusInf, PlusInf)                                             // [+-Inf, +-Inf] = [-Inf, +Inf] Always sound
     | Bottom -> Bottom
 
-
+// Union function. Bottom is absorbed by the other operand
 let union val1 val2 = 
     match val1, val2 with 
-    | Interval (l1, h1), Interval (l2, h2) -> Interval(number_min l1 l2, number_max h1 h2)
+    | Interval (a, b), Interval (c, d) -> Interval(number_min a c, number_max b d)
         
     | Bottom, _ -> val2
     | _, Bottom -> val1
 
 let intersect val1 val2 = 
     match val1, val2 with 
-    | Interval (l1, h1), Interval (l2, h2) ->
-        let l = (number_max l1 l2)
-        let h = (number_min h1 h2)
-        if number_leq l h then
-            Interval(l, h)
+    | Interval (a, b), Interval (c, d) ->
+        let min = (number_max a c)
+        let max = (number_min b d)
+        if number_leq min max then
+            Interval(min, max)
         else
             Bottom
         
@@ -213,6 +217,7 @@ let rec value_div v1 v2 =
     | Bottom, _
     | _, Bottom -> Bottom
 
+//Concretization function
 let concretization abstr_value = 
     match abstr_value with
     | Interval (IntrvInt n1, IntrvInt n2) ->
@@ -224,6 +229,7 @@ let concretization abstr_value =
 
     | _ -> VSet (Set.empty)
 
+//Abstraction function
 let abstraction value = 
     match value with
     | VSet set ->
@@ -234,6 +240,90 @@ let abstraction value =
             let (NInt max) = set.MaximumElement
             Interval (IntrvInt min, IntrvInt max)
 
+
+let widening x y =
+    match x, y with
+    | Interval(a, b), Interval(c, d) -> 
+        let lower = if number_leq a c then a else MinusInf
+        let higher = if number_leq d b then b else PlusInf
+        Interval (lower, higher)
+    | Bottom, _ -> y
+    | _, Bottom -> x
+
+let narrowing x y = 
+    match x, y with
+    | Interval(a, b), Interval(c, d) -> 
+        let lower = if a = MinusInf then c else a
+        let higher = if b = PlusInf then d else b
+        Interval (lower, higher)
+    | Bottom, _ -> y
+    | _, Bottom -> x
+
+let rec point_wise_union s1 s2 = 
+    match s1, s2 with
+    | [], [] -> []
+    | _, [] -> s1
+    | [], _ -> s2
+    | (var, value) :: xs, ys -> 
+        let found = List.tryFind (fun (v, _ ) -> v = var) ys
+        match found with
+        | None -> (var, value) :: point_wise_union xs ys
+        | Some (_, other_value) -> 
+            let filtered = List.filter( fun (v, _) -> v <> var ) ys
+            (var, union value other_value) :: point_wise_union xs filtered
+
+let rec point_wise_intersection s1 s2 = 
+    match s1, s2 with
+    | _, []
+    | [], _ -> []
+
+    | (var, value) :: xs, ys -> 
+        let found = List.tryFind (fun (v, _ ) -> v = var) ys
+
+        //Make intersection between the abstract values
+        let intersect_res = (
+            match found with
+            | None -> (var, Bottom)
+            | Some (_, other_value) -> (var, intersect value other_value)
+        )
+
+        //If there exists an iteration that evaluate to bottom, then the total result is bottom
+        match intersect_res with
+        | (_, Bottom) -> []
+        | (_, Interval _) ->
+            
+            //Filter the value found
+            let filtered = 
+                if found = None then 
+                    ys //Since we found the value, we don't proceed to iterate the rest of the list
+                else
+                    List.filter( fun (v, _) -> v <> var ) ys
+
+            match xs, filtered with
+            | [], _ -> intersect_res :: filtered
+            | _, [] -> [intersect_res]
+            | _ -> 
+                let forward_iteration = point_wise_intersection xs filtered
+                if forward_iteration.IsEmpty then
+                    []
+                else
+                    intersect_res :: forward_iteration
+            
+
+let rec point_wise_widening s1 s2 = 
+    match s1, s2 with
+    | [], [] -> []
+    | _, [] -> s1
+    | [], _ -> s2
+    | (var, value) :: xs, ys -> 
+        let found = List.tryFind (fun (v, _ ) -> v = var) ys
+        match found with
+        | None -> (var, value) :: point_wise_widening xs ys
+        | Some (_, other_value) -> 
+            let filtered = List.filter( fun (v, _) -> v <> var ) ys
+            (var, widening value other_value) :: point_wise_widening xs filtered
+
+
 let rec eval_abstr_expr expr state = 
     match expr with
     | Const (NInt c) -> Interval(IntrvInt c, IntrvInt c)
@@ -243,10 +333,8 @@ let rec eval_abstr_expr expr state =
         //Get all the values of the variable
         let elem = List.tryFind (fun (var, _) -> v = var ) state
         match elem with
-        | None -> Interval(MinusInf, PlusInf)
+        | None -> raise_error "Unknow variable %s" v
         | Some (_, value) -> value
-        //let (_, value) = List.find (fun (var, _) -> v = var ) state
-        //value
 
     | Range (NInt n1, NInt n2) ->
         Interval(IntrvInt n1, IntrvInt n2)
@@ -304,11 +392,24 @@ let rec eval_abstr_cond cond state =
 
     | NotOp c ->
         match c with 
+        | Bool true -> []
+        | Bool false -> state
         | Comparison (e1, "<=", e2) ->
             eval_abstr_cond (Comparison (e1, ">", e2)) state
         | Comparison (e1, ">", e2) ->
             eval_abstr_cond (Comparison (e1, "<=", e2)) state
+        | _ -> state
     
+    | BoolOp(c1, "and", c2) ->
+        let res1 = eval_abstr_cond c1 state
+        let res2 = eval_abstr_cond c2 state
+        point_wise_intersection res1 res2
+
+    | BoolOp(c1, "or", c2) ->
+        let res1 = eval_abstr_cond c1 state
+        let res2 = eval_abstr_cond c2 state
+        point_wise_union res1 res2
+
     | Comparison (e1, ">", e2) ->
         match e1, e2 with
         | Var variable, Const _ ->
@@ -319,7 +420,7 @@ let rec eval_abstr_cond cond state =
                 if (number_leq c b) then
                     update_var variable (Interval (number_max a c, b)) state
                 else
-                    state
+                    []
             | _ -> state
 
         | Var var_x, Var var_y ->
@@ -331,7 +432,7 @@ let rec eval_abstr_cond cond state =
                     let state_upd_x = update_var var_x (Interval (number_max a c, b)) state
                     update_var var_y (Interval (c, number_min b d)) state_upd_x
                 else
-                    state
+                    []
             | _ -> state
         | _ -> state
 
@@ -345,7 +446,7 @@ let rec eval_abstr_cond cond state =
                 if (number_leq a c) then
                     update_var variable (Interval (a, number_min b c)) state
                 else
-                    state
+                    []
             | _ -> state
 
         | Var var_x, Var var_y ->
@@ -357,55 +458,12 @@ let rec eval_abstr_cond cond state =
                     let state_upd_x = update_var var_x (Interval (a, number_min b d)) state
                     update_var var_y (Interval (number_max a c, d)) state_upd_x
                 else
-                    state
+                    []
             | _ -> state
         | _ -> state
                 
     | _ -> state
 
-let widening x y =
-    match x, y with
-    | Interval(a, b), Interval(c, d) -> 
-        let lower = if number_leq a c then a else MinusInf
-        let higher = if number_leq d b then b else PlusInf
-        Interval (lower, higher)
-    | Bottom, _ -> y
-    | _, Bottom -> x
-
-let narrowing x y = 
-    match x, y with
-    | Interval(a, b), Interval(c, d) -> 
-        let lower = if a = MinusInf then c else a
-        let higher = if b = PlusInf then d else b
-        Interval (lower, higher)
-    | Bottom, _ -> y
-    | _, Bottom -> x
-
-let rec point_wise_union s1 s2 = 
-    match s1, s2 with
-    | [], [] -> []
-    | _, [] -> s1
-    | [], _ -> s2
-    | (var, value) :: xs, ys -> 
-        let found = List.tryFind (fun (v, _ ) -> v = var) ys
-        match found with
-        | None -> (var, value) :: point_wise_union xs ys
-        | Some (_, other_value) -> 
-            let filtered = List.filter( fun (v, _) -> v <> var ) ys
-            (var, union value other_value) :: point_wise_union xs filtered
-
-let rec point_wise_widening s1 s2 = 
-    match s1, s2 with
-    | [], [] -> []
-    | _, [] -> s1
-    | [], _ -> s2
-    | (var, value) :: xs, ys -> 
-        let found = List.tryFind (fun (v, _ ) -> v = var) ys
-        match found with
-        | None -> (var, value) :: point_wise_widening xs ys
-        | Some (_, other_value) -> 
-            let filtered = List.filter( fun (v, _) -> v <> var ) ys
-            (var, widening value other_value) :: point_wise_widening xs filtered
 
 let rec check_abstrac_invariant curr_state next_state = 
     match curr_state, next_state with
@@ -417,37 +475,58 @@ let rec check_abstrac_invariant curr_state next_state =
         else
             false
 
-let rec eval_abstr_prog prog state = 
+let rec eval_abstr_prog prog state state_points = 
     match prog with
 
     | Assign (var, expr) ->
         let v = eval_abstr_expr expr state
-        update_var var v state
+        let next = (
+            match v with
+            | Interval _ -> update_var var v state
+            | Bottom -> []
+        )
+
+        (next, state_points @ [next])
 
     | Seq (p1, p2) ->
-        let s1 = eval_abstr_prog p1 state
-        eval_abstr_prog p2 s1
+        let (s1, new_state_points) = eval_abstr_prog p1 state state_points
+        eval_abstr_prog p2 s1 new_state_points
 
     | IfThenElse (cond, p1, p2) ->
-        let s1 = eval_abstr_prog p1 (eval_abstr_cond cond state)
-        let s2 = 
+        let eval_state_then = eval_abstr_cond cond state
+        let (s1, _) = (
+            match eval_state_then with
+            | [] -> ([], [])
+            | _ -> eval_abstr_prog p1 eval_state_then state_points
+        )
+
+        let (s2, _) = 
             match p2 with
-            | None -> []
-            | Some pp2 -> eval_abstr_prog pp2 (eval_abstr_cond (NotOp cond) state)
-        point_wise_union s1 s2
+            | None -> ([], [])
+            | Some pp2 -> 
+                let eval_state_else = eval_abstr_cond (NotOp cond) state
+                match eval_state_else with 
+                | [] -> ([], [])
+                | _ -> eval_abstr_prog pp2 eval_state_else state_points
+
+        let next = point_wise_union s1 s2
+        (next, state_points @ [next])
 
     | While (c, p) -> 
+        let mutable body_states = []
         let mutable s = eval_abstr_cond c state
         let mutable tmp = []
         let mutable invariant =  false
         while not invariant do
-            tmp <- point_wise_union state (eval_abstr_prog p (eval_abstr_cond c s))
+            let (evalued_prg, prg_points) = eval_abstr_prog p (eval_abstr_cond c s) state_points
+            body_states <- body_states @ prg_points
+            tmp <- point_wise_union state evalued_prg
             tmp <- point_wise_widening s tmp
             invariant <- check_abstrac_invariant s tmp
             s <- tmp
 
-        let res = eval_abstr_cond (NotOp c) s
-        res
+        let next = eval_abstr_cond (NotOp c) s
+        (next, body_states @ [next])
         //match c with
         //| Comparison (Var x, op, e2) ->
         //    let value = eval_abstr_expr (Var x) res

@@ -11,6 +11,8 @@ type token =
   | RCUR
   | LRANGE
   | RRANGE
+  | TRUE
+  | FALSE
   | IF
   | THEN
   | ELSE
@@ -43,6 +45,8 @@ type tokenId =
     | TOKEN_RCUR
     | TOKEN_LRANGE
     | TOKEN_RRANGE
+    | TOKEN_TRUE
+    | TOKEN_FALSE
     | TOKEN_IF
     | TOKEN_THEN
     | TOKEN_ELSE
