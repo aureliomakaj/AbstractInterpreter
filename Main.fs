@@ -22,7 +22,8 @@ let parse_prog (filename:string) =
         //Buffer from stream 
         let lexbuf = LexBuffer<char>.FromTextReader rd
         let program = Parser.prog Lexer.token lexbuf
-        let (res, prg_points) = eval_abstr_prog program [] []
+        let init = get_init_state program
+        let (res, prg_points) = eval_abstr_prog program init [init]
         //printf "%s" (pretty_env res)
         printf "PROGRAM POINTS ----------------------------\n"
         List.iter (fun env -> printf "%s------------------ \n" (pretty_env env)) prg_points

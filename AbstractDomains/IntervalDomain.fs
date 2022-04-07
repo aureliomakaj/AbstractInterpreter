@@ -171,7 +171,7 @@ let value_neg intrv =
         | _ -> Interval (MinusInf, PlusInf)                                             // [+-Inf, +-Inf] = [-Inf, +Inf] Always sound
     | Bottom -> Bottom
 
-// Union function. Bottom is absorbed by the other operand
+// Union function. Bottom is neutral
 let union val1 val2 = 
     match val1, val2 with 
     | Interval (a, b), Interval (c, d) -> Interval(number_min a c, number_max b d)
@@ -179,6 +179,7 @@ let union val1 val2 =
     | Bottom, _ -> val2
     | _, Bottom -> val1
 
+//Intersection function. Bottom is absorbtive
 let intersect val1 val2 = 
     match val1, val2 with 
     | Interval (a, b), Interval (c, d) ->
@@ -333,7 +334,7 @@ let rec eval_abstr_expr expr state =
         //Get all the values of the variable
         let elem = List.tryFind (fun (var, _) -> v = var ) state
         match elem with
-        | None -> raise_error "Unknow variable %s" v
+        | None -> Interval(MinusInf, PlusInf)//raise_error "Unknow variable %s" v
         | Some (_, value) -> value
 
     | Range (NInt n1, NInt n2) ->
@@ -417,8 +418,8 @@ let rec eval_abstr_cond cond state =
             let v2 = eval_abstr_expr e2 state
             match v1, v2 with
             | Interval (a, b), Interval (c, d) ->
-                if (number_leq c b) then
-                    update_var variable (Interval (number_max a c, b)) state
+                if (number_lower c b) then
+                    update_var variable (Interval (number_max a (number_sum c (IntrvInt 1)), b)) state
                 else
                     []
             | _ -> state
@@ -428,9 +429,9 @@ let rec eval_abstr_cond cond state =
             let v2 = eval_abstr_expr e2 state
             match v1, v2 with
             | Interval (a, b), Interval (c, d) ->
-                if (number_leq c b) then
-                    let state_upd_x = update_var var_x (Interval (number_max a c, b)) state
-                    update_var var_y (Interval (c, number_min b d)) state_upd_x
+                if (number_lower c b) then
+                    let state_upd_x = update_var var_x (Interval ( (number_max a ( number_sum c (IntrvInt 1))), d)) state
+                    update_var var_y (Interval (a, number_min b (number_minus d (IntrvInt 1)))) state_upd_x
                 else
                     []
             | _ -> state
@@ -469,6 +470,7 @@ let rec check_abstrac_invariant curr_state next_state =
     match curr_state, next_state with
     | [], [] -> true
     | _, [] -> false
+    | [], _ -> false
     | (_, val_x) :: xs, (_, val_y) :: ys -> 
         if value_eq val_x val_y then
             check_abstrac_invariant xs ys
@@ -476,59 +478,102 @@ let rec check_abstrac_invariant curr_state next_state =
             false
 
 let rec eval_abstr_prog prog state state_points = 
-    match prog with
+    match state with
+    | [] -> ([], state_points @ [[]])
+    | _ ->
+        match prog with
+        //Assignment. If the expression is evaluated to Bottom, then we propagate it
+        | Assign (var, expr) ->
+            let v = eval_abstr_expr expr state
+            let next = (
+                match v with
+                | Interval _ -> update_var var v state
+                | Bottom -> []
+            )
 
-    | Assign (var, expr) ->
-        let v = eval_abstr_expr expr state
-        let next = (
-            match v with
-            | Interval _ -> update_var var v state
-            | Bottom -> []
-        )
+            (next, state_points @ [next])
 
-        (next, state_points @ [next])
+        //Sequence of instruction. Execute the first and then the second on the states resulting from the previous one
+        | Seq (p1, p2) ->
+            let (s1, new_state_points) = eval_abstr_prog p1 state state_points
+            eval_abstr_prog p2 s1 new_state_points
 
-    | Seq (p1, p2) ->
-        let (s1, new_state_points) = eval_abstr_prog p1 state state_points
-        eval_abstr_prog p2 s1 new_state_points
-
-    | IfThenElse (cond, p1, p2) ->
-        let eval_state_then = eval_abstr_cond cond state
-        let (s1, _) = (
-            match eval_state_then with
-            | [] -> ([], [])
-            | _ -> eval_abstr_prog p1 eval_state_then state_points
-        )
-
-        let (s2, _) = 
-            match p2 with
-            | None -> ([], [])
-            | Some pp2 -> 
-                let eval_state_else = eval_abstr_cond (NotOp cond) state
-                match eval_state_else with 
+        | IfThenElse (cond, p1, p2) ->
+            let eval_state_then = eval_abstr_cond cond state
+            //Execute the body of the if on the states that satisfy the guard
+            let (s1, _) = (
+                match eval_state_then with
                 | [] -> ([], [])
-                | _ -> eval_abstr_prog pp2 eval_state_else state_points
+                | _ -> eval_abstr_prog p1 eval_state_then state_points
+            )
 
-        let next = point_wise_union s1 s2
-        (next, state_points @ [next])
+            //If there is an else branch, execute the else-body on the states that do not satisfy the guard
+            let (s2, _) = (
+                match p2 with
+                | None -> ([], [])
+                | Some pp2 -> 
+                    let eval_state_else = eval_abstr_cond (NotOp cond) state
+                    match eval_state_else with 
+                    | [] -> ([], [])
+                    | _ -> eval_abstr_prog pp2 eval_state_else state_points
+            )
 
+            //The resulting set of states is the result of the point wise union
+            let next = point_wise_union s1 s2
+            (next, state_points @ [next])
+
+        | While (c, p) -> 
+            //The states satisfying the body
+            let mutable s = eval_abstr_cond c state
+            //Program states
+            let mutable body_states = state_points
+            //Temp variable used to check if we reached our fixpoint
+            let mutable tmp = []
+            let mutable invariant =  false
+            while not invariant do
+                //Evaluate the body on the states that satisfy the guard
+                let (evalued_prg, prg_points) = eval_abstr_prog p (eval_abstr_cond c s) state_points
+                //Save the program points
+                body_states <- List.append body_states prg_points
+                //Point wise unione between the original states and the last computed
+                let union = point_wise_union state evalued_prg
+                //Apply the widening to accelerate divergence
+                tmp <- point_wise_widening s union
+                //Check if we reached the invariant
+                invariant <- check_abstrac_invariant s tmp
+                //Save the new states
+                s <- tmp
+
+            let next = eval_abstr_cond (NotOp c) s
+            let prg_points = body_states @ [next]
+            (next, prg_points)
+            //match c with
+            //| Comparison (Var x, op, e2) ->
+            //    let x_value = eval_abstr_expr (Var x) next
+            //    let guard_value = eval_abstr_expr e2 next
+            //    let final_state = update_var x (narrowing x_value guard_value) next
+            //    (final_state, prg_points @ [final_state])
+            //| _ -> (next, prg_points)
+
+let rec set_init_vars prog = 
+    match prog with
+    
+    | Assign (var, _) ->
+        Set.singleton(var)
+    
+    | Seq (p1, p2) ->
+        Set.union (set_init_vars p1) (set_init_vars p2)
+    
+    | IfThenElse (cond, p1, p2) ->
+        Set.union (set_init_vars p1) (
+            match p2 with
+            | None -> Set.empty
+            | Some pp2 -> set_init_vars pp2
+        )
+    
     | While (c, p) -> 
-        let mutable body_states = []
-        let mutable s = eval_abstr_cond c state
-        let mutable tmp = []
-        let mutable invariant =  false
-        while not invariant do
-            let (evalued_prg, prg_points) = eval_abstr_prog p (eval_abstr_cond c s) state_points
-            body_states <- body_states @ prg_points
-            tmp <- point_wise_union state evalued_prg
-            tmp <- point_wise_widening s tmp
-            invariant <- check_abstrac_invariant s tmp
-            s <- tmp
+        set_init_vars p
 
-        let next = eval_abstr_cond (NotOp c) s
-        (next, body_states @ [next])
-        //match c with
-        //| Comparison (Var x, op, e2) ->
-        //    let value = eval_abstr_expr (Var x) res
-        //    let v = eval_abstr_expr e2 res
-        //    update_var x (narrowing value v) res
+let get_init_state prog = 
+    let lhv = set_init_vars prog
+    List.map (fun s -> (s, Interval(MinusInf, PlusInf))) (Set.toList lhv)

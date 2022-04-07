@@ -16,10 +16,10 @@ type expr =
     | Range of number * number //Interval
 
 type cond = 
-    | Bool of bool
-    | BoolOp of cond * string * cond
-    | NotOp of cond
-    | Comparison of expr * string * expr
+    | Bool of bool // True or False
+    | BoolOp of cond * string * cond // Logic operations
+    | NotOp of cond // Negation
+    | Comparison of expr * string * expr // Expression comparison
 
 
 //Statement
@@ -31,5 +31,3 @@ type prog =
     
 
 type mem_state = (string * number) list
-
-type env = mem_state list

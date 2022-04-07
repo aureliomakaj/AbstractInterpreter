@@ -1,5 +1,12 @@
-﻿x := 10;
+﻿x := 0;
 y := 0;
 while x <= 40 do {
-	x := x + 1
+	x := x + 1;
+	y := y + 1
+};
+
+if x <= y then {
+    y := y + 20
+} else {
+	y := y - 20
 }

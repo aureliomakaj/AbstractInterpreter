@@ -15,7 +15,7 @@ let pretty_abstract_value value =
     | Bottom -> sprintf "Bottom"
 
 let pretty_env env =
-    let res = List.fold (fun acc (var, value) -> acc + sprintf "%s -> %s; \n" var (pretty_abstract_value value)) "" (List.rev env)
+    let res = List.fold (fun acc (var, value) -> acc + sprintf "%s -> %s; \n" var (pretty_abstract_value value)) "" (env)
     if res.Length = 0 then 
         "Bottom\n"
     else
