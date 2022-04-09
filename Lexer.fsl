@@ -42,9 +42,8 @@ rule token = parse
 	| "-"			{ MINUS }
 	| "*"			{ STAR }
 	| "/"			{ SLASH }
-	| "%"			{ MOD }
 
-	| "=="			{ EQ }
+	| "="			{ EQ }
 	| "!="			{ NEQ }
 	| "<"			{ LT }
 	| ">"			{ GT }

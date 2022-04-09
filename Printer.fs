@@ -1,7 +1,6 @@
 ﻿module Printer
 
 open AbstractDomains.IntervalDomain
-open ConcreteDomain
 
 let pretty_abstract_number number = 
     match number with

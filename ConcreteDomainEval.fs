@@ -119,28 +119,28 @@ and comparition_op op e1 e2 states =
     else 
         []
 
-let rec eval_prog prog states = 
-    match prog with
+//let rec eval_prog prog states = 
+//    match prog with
 
-    | Assign (var, expr) ->
-        let (VSet eval) = eval_expr expr states
-        let l = List.map (fun n -> (var, n)) (List.ofSeq eval)
-        l @ (List.filter (fun (v, _ ) -> v <> var) states)
+//    | Assign (var, expr) ->
+//        let (VSet eval) = eval_expr expr states
+//        let l = List.map (fun n -> (var, n)) (List.ofSeq eval)
+//        l @ (List.filter (fun (v, _ ) -> v <> var) states)
 
-    | Seq (p1, p2) ->
-        let s1 = eval_prog p1 states
-        eval_prog p2 s1
+//    | Seq (p1, p2) ->
+//        let s1 = eval_prog p1 states
+//        eval_prog p2 s1
 
-    | IfThenElse (cond, p1, p2) ->
-        let s1 = eval_prog p1 (eval_cond cond states)
-        let s2 = 
-            match p2 with
-            | None -> []
-            | Some pp2 -> eval_prog pp2 (eval_cond (NotOp cond) states)
-        s1 @ s2
+//    | IfThenElse (cond, p1, p2) ->
+//        let s1 = eval_prog p1 (eval_cond cond states)
+//        let s2 = 
+//            match p2 with
+//            | None -> []
+//            | Some pp2 -> eval_prog pp2 (eval_cond (NotOp cond) states)
+//        s1 @ s2
 
-    | While (c, p) -> 
-        let mutable s = eval_cond c states
-        while not s.IsEmpty do
-            s <- eval_cond c (eval_prog p s) 
-        eval_cond (NotOp c) s
+//    | While (c, p) -> 
+//        let mutable s = eval_cond c states
+//        while not s.IsEmpty do
+//            s <- eval_cond c (eval_prog p s) 
+//        eval_cond (NotOp c) s

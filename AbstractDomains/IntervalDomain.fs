@@ -334,7 +334,7 @@ let rec eval_abstr_expr expr state =
         //Get all the values of the variable
         let elem = List.tryFind (fun (var, _) -> v = var ) state
         match elem with
-        | None -> Interval(MinusInf, PlusInf)//raise_error "Unknow variable %s" v
+        | None -> Bottom //Interval(MinusInf, PlusInf)//raise_error "Unknow variable %s" v
         | Some (_, value) -> value
 
     | Range (NInt n1, NInt n2) ->
@@ -395,6 +395,16 @@ let rec eval_abstr_cond cond state =
         match c with 
         | Bool true -> []
         | Bool false -> state
+
+        | NotOp (cc) -> 
+            eval_abstr_cond cc state
+
+        | Comparison (e1, "=", e2) ->
+            eval_abstr_cond (Comparison (e1, "!=", e2)) state
+        
+        | Comparison (e1, "!=", e2) ->
+            eval_abstr_cond (Comparison (e1, "=", e2)) state
+
         | Comparison (e1, "<=", e2) ->
             eval_abstr_cond (Comparison (e1, ">", e2)) state
         | Comparison (e1, ">", e2) ->
@@ -410,6 +420,28 @@ let rec eval_abstr_cond cond state =
         let res1 = eval_abstr_cond c1 state
         let res2 = eval_abstr_cond c2 state
         point_wise_union res1 res2
+
+    | Comparison (e1, "=", e2) ->
+        let v1 = eval_abstr_expr e1 state
+        let v2 = eval_abstr_expr e2 state
+        match v1, v2 with
+        | Interval (a, b), Interval (c, d) ->
+            if (number_eq a c) && (number_eq b d) then
+                state
+            else
+                []
+        | _ -> state
+
+    | Comparison (e1, "!=", e2) ->
+        let v1 = eval_abstr_expr e1 state
+        let v2 = eval_abstr_expr e2 state
+        match v1, v2 with
+        | Interval (a, b), Interval (c, d) ->
+            if (not (number_eq a c)) || (not (number_eq b d)) then
+                state
+            else
+                []
+        | _ -> state
 
     | Comparison (e1, ">", e2) ->
         match e1, e2 with
@@ -430,8 +462,9 @@ let rec eval_abstr_cond cond state =
             match v1, v2 with
             | Interval (a, b), Interval (c, d) ->
                 if (number_lower c b) then
-                    let state_upd_x = update_var var_x (Interval ( (number_max a ( number_sum c (IntrvInt 1))), d)) state
-                    update_var var_y (Interval (a, number_min b (number_minus d (IntrvInt 1)))) state_upd_x
+                    let state_upd_x = update_var var_x (Interval ( (number_max a ( number_sum d (IntrvInt 1))), b)) state
+                    //update_var var_y (Interval (c, number_min a (number_minus d (IntrvInt 1)))) state_upd_x
+                    update_var var_y (Interval (MinusInf, PlusInf)) state_upd_x
                 else
                     []
             | _ -> state
@@ -439,25 +472,16 @@ let rec eval_abstr_cond cond state =
 
     | Comparison (e1, "<=", e2) ->
         match e1, e2 with
-        | Var variable, Const _ ->
-            let v1 = eval_abstr_expr e1 state
-            let v2 = eval_abstr_expr e2 state
-            match v1, v2 with
-            | Interval (a, b), Interval (c, d) ->
-                if (number_leq a c) then
-                    update_var variable (Interval (a, number_min b c)) state
-                else
-                    []
-            | _ -> state
-
-        | Var var_x, Var var_y ->
+        | Var var_x, _ ->
             let v1 = eval_abstr_expr e1 state
             let v2 = eval_abstr_expr e2 state
             match v1, v2 with
             | Interval (a, b), Interval (c, d) ->
                 if (number_leq a d) then
                     let state_upd_x = update_var var_x (Interval (a, number_min b d)) state
-                    update_var var_y (Interval (number_max a c, d)) state_upd_x
+                    match e2 with
+                    | Var var_y -> update_var var_y (Interval (number_max a c, d)) state_upd_x
+                    | _ -> state_upd_x
                 else
                     []
             | _ -> state
@@ -466,14 +490,14 @@ let rec eval_abstr_cond cond state =
     | _ -> state
 
 
-let rec check_abstrac_invariant curr_state next_state = 
+let rec check_fixpoint curr_state next_state = 
     match curr_state, next_state with
     | [], [] -> true
     | _, [] -> false
     | [], _ -> false
     | (_, val_x) :: xs, (_, val_y) :: ys -> 
         if value_eq val_x val_y then
-            check_abstrac_invariant xs ys
+            check_fixpoint xs ys
         else
             false
 
@@ -501,59 +525,58 @@ let rec eval_abstr_prog prog state state_points =
         | IfThenElse (cond, p1, p2) ->
             let eval_state_then = eval_abstr_cond cond state
             //Execute the body of the if on the states that satisfy the guard
-            let (s1, _) = (
+            let (s1, then_body_points) = (
                 match eval_state_then with
                 | [] -> ([], [])
-                | _ -> eval_abstr_prog p1 eval_state_then state_points
+                | _ -> eval_abstr_prog p1 eval_state_then []
             )
 
+            let mutable eval_state_else = []
             //If there is an else branch, execute the else-body on the states that do not satisfy the guard
-            let (s2, _) = (
+            let (s2, else_body_states) = (
                 match p2 with
-                | None -> ([], [])
+                | None -> ([], [[]])
                 | Some pp2 -> 
-                    let eval_state_else = eval_abstr_cond (NotOp cond) state
+                    eval_state_else <- eval_abstr_cond (NotOp cond) state
                     match eval_state_else with 
-                    | [] -> ([], [])
-                    | _ -> eval_abstr_prog pp2 eval_state_else state_points
+                    | [] -> ([], [[]])
+                    | _ -> eval_abstr_prog pp2 eval_state_else []
             )
 
             //The resulting set of states is the result of the point wise union
             let next = point_wise_union s1 s2
-            (next, state_points @ [next])
+            (next, state_points @ [eval_state_then] @ then_body_points @ [eval_state_else] @ else_body_states @ [next])
 
         | While (c, p) -> 
             //The states satisfying the body
-            let mutable s = eval_abstr_cond c state
-            //Program states
-            let mutable body_states = state_points
+            let mutable prev = eval_abstr_cond c state
             //Temp variable used to check if we reached our fixpoint
-            let mutable tmp = []
-            let mutable invariant =  false
-            while not invariant do
-                //Evaluate the body on the states that satisfy the guard
-                let (evalued_prg, prg_points) = eval_abstr_prog p (eval_abstr_cond c s) state_points
+            let mutable before_body = []
+            let mutable after_body = []
+            let mutable curr = []
+            let mutable fixpoint =  false
+            while not fixpoint do
+                let s2 = eval_abstr_cond c prev
                 //Save the program points
-                body_states <- List.append body_states prg_points
+                before_body <- [s2]
+                //Evaluate the body on the states that satisfy the guard
+                let (evalued_prg, prg_points) = eval_abstr_prog p s2 []
                 //Point wise unione between the original states and the last computed
                 let union = point_wise_union state evalued_prg
+                after_body <- prg_points
                 //Apply the widening to accelerate divergence
-                tmp <- point_wise_widening s union
+                curr <- point_wise_widening prev union
                 //Check if we reached the invariant
-                invariant <- check_abstrac_invariant s tmp
+                fixpoint <- check_fixpoint prev curr
                 //Save the new states
-                s <- tmp
+                prev <- curr
 
-            let next = eval_abstr_cond (NotOp c) s
-            let prg_points = body_states @ [next]
+            let next = eval_abstr_cond (NotOp c) prev
+            let prg_points = state_points @ before_body @ after_body @ [next]
             (next, prg_points)
-            //match c with
-            //| Comparison (Var x, op, e2) ->
-            //    let x_value = eval_abstr_expr (Var x) next
-            //    let guard_value = eval_abstr_expr e2 next
-            //    let final_state = update_var x (narrowing x_value guard_value) next
-            //    (final_state, prg_points @ [final_state])
-            //| _ -> (next, prg_points)
+            //With narrowing 
+            //let final_state = point_wise_intersection next (after_body.Item(after_body.Length - 1))
+            //(final_state, prg_points @ [final_state])
 
 let rec set_init_vars prog = 
     match prog with

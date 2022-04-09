@@ -1,12 +1,9 @@
 ﻿x := 0;
-y := 0;
+y := 70;
 while x <= 40 do {
-	x := x + 1;
-	y := y + 1
-};
-
-if x <= y then {
-    y := y + 20
-} else {
-	y := y - 20
+	while y <= 20 do {
+	    x := x + 1;
+		y := y + 1
+	}
 }
+	

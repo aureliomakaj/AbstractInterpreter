@@ -22,7 +22,6 @@ type token =
   | MINUS
   | STAR
   | SLASH
-  | MOD
   | LT
   | GT
   | LEQ
@@ -56,7 +55,6 @@ type tokenId =
     | TOKEN_MINUS
     | TOKEN_STAR
     | TOKEN_SLASH
-    | TOKEN_MOD
     | TOKEN_LT
     | TOKEN_GT
     | TOKEN_LEQ
