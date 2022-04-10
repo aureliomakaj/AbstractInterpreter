@@ -334,7 +334,7 @@ let rec eval_abstr_expr expr state =
         //Get all the values of the variable
         let elem = List.tryFind (fun (var, _) -> v = var ) state
         match elem with
-        | None -> Bottom //Interval(MinusInf, PlusInf)//raise_error "Unknow variable %s" v
+        | None -> Bottom
         | Some (_, value) -> value
 
     | Range (NInt n1, NInt n2) ->
@@ -574,9 +574,6 @@ let rec eval_abstr_prog prog state state_points =
             let next = eval_abstr_cond (NotOp c) prev
             let prg_points = state_points @ before_body @ after_body @ [next]
             (next, prg_points)
-            //With narrowing 
-            //let final_state = point_wise_intersection next (after_body.Item(after_body.Length - 1))
-            //(final_state, prg_points @ [final_state])
 
 let rec set_init_vars prog = 
     match prog with
