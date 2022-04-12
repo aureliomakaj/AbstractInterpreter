@@ -399,11 +399,11 @@ let rec eval_abstr_cond cond state =
         | NotOp (cc) -> 
             eval_abstr_cond cc state
 
-        | Comparison (e1, "=", e2) ->
-            eval_abstr_cond (Comparison (e1, "!=", e2)) state
+        //| Comparison (e1, "=", e2) ->
+        //    eval_abstr_cond (Comparison (e1, "!=", e2)) state
         
-        | Comparison (e1, "!=", e2) ->
-            eval_abstr_cond (Comparison (e1, "=", e2)) state
+        //| Comparison (e1, "!=", e2) ->
+        //    eval_abstr_cond (Comparison (e1, "=", e2)) state
 
         | Comparison (e1, "<=", e2) ->
             eval_abstr_cond (Comparison (e1, ">", e2)) state
@@ -411,37 +411,41 @@ let rec eval_abstr_cond cond state =
             eval_abstr_cond (Comparison (e1, "<=", e2)) state
         | _ -> state
     
-    | BoolOp(c1, "and", c2) ->
-        let res1 = eval_abstr_cond c1 state
-        let res2 = eval_abstr_cond c2 state
-        point_wise_intersection res1 res2
+    //| BoolOp(c1, "and", c2) ->
+    //    let res1 = eval_abstr_cond c1 state
+    //    let res2 = eval_abstr_cond c2 state
+    //    point_wise_intersection res1 res2
 
-    | BoolOp(c1, "or", c2) ->
-        let res1 = eval_abstr_cond c1 state
-        let res2 = eval_abstr_cond c2 state
-        point_wise_union res1 res2
+    //| BoolOp(c1, "or", c2) ->
+    //    let res1 = eval_abstr_cond c1 state
+    //    let res2 = eval_abstr_cond c2 state
+    //    point_wise_union res1 res2
 
-    | Comparison (e1, "=", e2) ->
-        let v1 = eval_abstr_expr e1 state
-        let v2 = eval_abstr_expr e2 state
-        match v1, v2 with
-        | Interval (a, b), Interval (c, d) ->
-            if (number_eq a c) && (number_eq b d) then
-                state
-            else
-                []
-        | _ -> state
+    //| Comparison (e1, "=", e2) ->
+    //    match e1, e2 with
+    //    | Var variable, Const _ ->
+    //        let v1 = eval_abstr_expr e1 state
+    //        let v2 = eval_abstr_expr e2 state
+    //        match v1, v2 with
+    //        | Interval (a, b), Interval (c, d) ->
+    //            if (number_eq a c) && (number_eq b d) then
+    //                update_var variable (Interval (b, d)) state
+    //            else
+    //                []
+    //        | _ -> state
+    //    | _ -> state
 
-    | Comparison (e1, "!=", e2) ->
-        let v1 = eval_abstr_expr e1 state
-        let v2 = eval_abstr_expr e2 state
-        match v1, v2 with
-        | Interval (a, b), Interval (c, d) ->
-            if (not (number_eq a c)) || (not (number_eq b d)) then
-                state
-            else
-                []
-        | _ -> state
+
+    //| Comparison (e1, "!=", e2) ->
+    //    let v1 = eval_abstr_expr e1 state
+    //    let v2 = eval_abstr_expr e2 state
+    //    match v1, v2 with
+    //    | Interval (a, b), Interval (c, d) ->
+    //        if (not (number_eq a c)) || (not (number_eq b d)) then
+    //            state
+    //        else
+    //            []
+    //    | _ -> state
 
     | Comparison (e1, ">", e2) ->
         match e1, e2 with

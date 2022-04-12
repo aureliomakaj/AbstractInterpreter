@@ -1,5 +1,5 @@
-﻿x := 0;
+﻿x := 110;
 y := 0;
-while true do {
-	skip
+while x != 0 do {
+	x := x - 1
 }
