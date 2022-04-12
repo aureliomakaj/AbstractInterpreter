@@ -24,6 +24,7 @@ type cond =
 
 //Statement
 type prog = 
+    | Skip 
     | Assign of string * expr //Assignment
     | Seq of prog * prog // Sequence of statements
     | IfThenElse of cond * prog * prog option // If - then - else

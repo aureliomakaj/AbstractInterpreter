@@ -506,6 +506,9 @@ let rec eval_abstr_prog prog state state_points =
     | [] -> ([], state_points @ [[]])
     | _ ->
         match prog with
+        
+        | Skip -> (state, state_points @ [state])
+
         //Assignment. If the expression is evaluated to Bottom, then we propagate it
         | Assign (var, expr) ->
             let v = eval_abstr_expr expr state
@@ -577,7 +580,9 @@ let rec eval_abstr_prog prog state state_points =
 
 let rec set_init_vars prog = 
     match prog with
-    
+
+    | Skip -> Set.empty
+
     | Assign (var, _) ->
         Set.singleton(var)
     

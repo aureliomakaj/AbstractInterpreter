@@ -7,7 +7,7 @@ open ConcreteDomain
 
 %token 
        COMMA ASSIGN SEMICOLON LPAR RPAR LCUR RCUR LRANGE RRANGE
-       TRUE FALSE IF THEN ELSE WHILE DO 
+       TRUE FALSE IF THEN ELSE WHILE DO SKIP
        PLUS MINUS STAR SLASH
        LT GT LEQ GEQ EQ NEQ
        AND OR NOT
@@ -61,8 +61,11 @@ cond:
     
 
 prog: 
-      ID ASSIGN expr                                        { Assign($1, $3) }
+
+    | ID ASSIGN expr                                        { Assign($1, $3) }
         
+    | SKIP                                                  { Skip }
+
     | prog SEMICOLON prog                                   { Seq($1, $3) }
 
     | IF cond THEN LCUR prog RCUR                           { IfThenElse($2, $5, None) }

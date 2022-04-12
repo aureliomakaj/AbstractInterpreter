@@ -1,9 +1,5 @@
 ﻿x := 0;
-y := 70;
-while x <= 40 do {
-	while y <= 20 do {
-	    x := x + 1;
-		y := y + 1
-	}
+y := 0;
+while true do {
+	skip
 }
-	

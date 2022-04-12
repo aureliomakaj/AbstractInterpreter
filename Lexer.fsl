@@ -37,6 +37,7 @@ rule token = parse
 	| "else"        { ELSE }
 	| "while"       { WHILE }
 	| "do"          { DO }
+	| "skip"		{ SKIP }
 
 	| "+"			{ PLUS }
 	| "-"			{ MINUS }

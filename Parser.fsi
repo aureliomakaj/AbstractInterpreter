@@ -18,6 +18,7 @@ type token =
   | ELSE
   | WHILE
   | DO
+  | SKIP
   | PLUS
   | MINUS
   | STAR
@@ -51,6 +52,7 @@ type tokenId =
     | TOKEN_ELSE
     | TOKEN_WHILE
     | TOKEN_DO
+    | TOKEN_SKIP
     | TOKEN_PLUS
     | TOKEN_MINUS
     | TOKEN_STAR
