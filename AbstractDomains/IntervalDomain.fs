@@ -491,7 +491,7 @@ let rec eval_abstr_cond cond state =
             | _ -> state
         | _ -> state
                 
-    | _ -> state
+    | _ -> state //For all the unsupported case, just filter all the states. This is always sound
 
 
 let rec check_fixpoint curr_state next_state = 

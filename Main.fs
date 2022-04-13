@@ -22,13 +22,14 @@ let parse_prog (filename:string) =
         let program = Parser.prog Lexer.token lexbuf
         let init = get_init_state program
         let (res, prg_points) = eval_abstr_prog program init [init]
+        printf "RESULT ----------------------------\n"
+        printf "%s\n" (pretty_env res)
+
         printf "PROGRAM POINTS ----------------------------\n"
         List.iter (fun env -> printf "%s------------------ \n" (pretty_env env)) prg_points
 
 
 [<EntryPoint>]
 let main argv =
-    //try
     parse_prog argv.[0]
-    //with ex -> printfn "%s" (ex.ToString())
     0 // return an integer exit code
